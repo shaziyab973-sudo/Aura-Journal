@@ -1,0 +1,156 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and preferences",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique Firebase user ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar photo URL"
+        }
+      },
+      "required": ["uid"]
+    },
+    "JournalSession": {
+      "title": "JournalSession",
+      "description": "A single journaling session containing reflections, mood, and metadata",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique session ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID matching request.auth.uid"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the journal session"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Epoch timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Epoch timestamp of latest modification"
+        },
+        "mood": {
+          "type": "string",
+          "description": "Emotional mood tag"
+        },
+        "messageCount": {
+          "type": "number",
+          "description": "Count of reflections and dialog turns logged"
+        },
+        "preview": {
+          "type": "string",
+          "description": "Short excerpt preview for list cards"
+        },
+        "tags": {
+          "type": "array",
+          "description": "List of thematic reflection tags"
+        },
+        "summary": {
+          "type": "object",
+          "description": "Structured session summary synthesized by Gemini AI"
+        },
+        "location": {
+          "type": "object",
+          "description": "Location metadata (fuzzed coordinates, place name, neighborhood)"
+        },
+        "sentiment": {
+          "type": "object",
+          "description": "AI Sentiment Analytics result (score, energy, dominant tone)"
+        }
+      },
+      "required": ["id", "userId", "title", "createdAt", "updatedAt"]
+    },
+    "ActionTask": {
+      "title": "ActionTask",
+      "description": "Action item extracted from journal reflections with priority and status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique task ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "sessionId": { "type": "string", "description": "Source journal session ID" },
+        "title": { "type": "string", "description": "Action task title" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"], "description": "Task urgency priority" },
+        "category": { "type": "string", "description": "Life or work category" },
+        "status": { "type": "string", "enum": ["pending", "completed"], "description": "Current task state" },
+        "createdAt": { "type": "number", "description": "Creation epoch timestamp" },
+        "context": { "type": "string", "description": "Context snippet from original journal" }
+      },
+      "required": ["id", "userId", "title", "status", "createdAt"]
+    },
+    "JournalMessage": {
+      "title": "JournalMessage",
+      "description": "An individual message or reflection turn within a session",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique message ID"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Parent session ID"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant", "system"],
+          "description": "Message author role"
+        },
+        "content": {
+          "type": "string",
+          "description": "Text content of the reflection or response"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Epoch timestamp of the message"
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Type of reflection action (chat, summarize, reflect, brainstorm)"
+        },
+        "modelUsed": {
+          "type": "string",
+          "description": "Gemini model identifier used for response generation"
+        }
+      },
+      "required": ["id", "sessionId", "role", "content", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Root user profile document"
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": "JournalSession",
+      "description": "User journal reflection sessions"
+    },
+    "/users/{userId}/sessions/{sessionId}/messages/{messageId}": {
+      "schema": "JournalMessage",
+      "description": "Multi-turn reflection messages within a session"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "ActionTask",
+      "description": "User actionable tasks extracted from reflections"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Aura Journal",
+  "description": "Aura Journal is a private, AI-powered personal growth and reflection companion with sentiment analytics, action item extraction, and secure Firestore persistence.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
