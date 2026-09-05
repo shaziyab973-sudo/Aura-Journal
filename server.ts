@@ -4,7 +4,7 @@ import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;;
 const app = express();
 
 // 1. Mandatory Top-Level Request Deserialization (Ordering Guarantee)
