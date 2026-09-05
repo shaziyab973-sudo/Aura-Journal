@@ -28,13 +28,13 @@ import { JournalSession, JournalMessage, UserProfile } from '../types';
 
 // Default static configuration from generated environment
 export const firebaseStaticConfig = {
-  projectId: "gen-lang-client-0448843619",
-  appId: "1:137468153830:web:c136ecc47c1ccf6ea89027",
-  apiKey: "AIzaSyDnYkSd80UFnlGSQqdJ6L2C2l6ZgmkjeOo",
-  authDomain: "gen-lang-client-0448843619.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-aipersonaljourna-75dd0712-a57a-4165-b45e-6a22e4e37939",
-  storageBucket: "gen-lang-client-0448843619.firebasestorage.app",
-  messagingSenderId: "137468153830",
+  projectId: "aura-journal-1231d",
+  appId: "1:904402644625:web:402bb1182c8cc60ac7d930",
+  apiKey: "AIzaSyBsutXi1drNfb0dOjMgw4Vd8-jhnyo8uF8",
+  authDomain: "aura-journal-1231d.firebaseapp.com",
+  firestoreDatabaseId: "(default)",
+  storageBucket: "aura-journal-1231d.firebasestorage.app",
+  messagingSenderId: "904402644625",
 };
 
 let app: FirebaseApp;
