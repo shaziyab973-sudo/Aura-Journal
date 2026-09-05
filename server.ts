@@ -27,7 +27,10 @@ try {
 // gemini-3.1-flash-lite provides unmatched high availability during global capacity spikes
 // gemini-3.8-flash and gemini-3.6-flash provide deep text processing
 const MODEL_FALLBACK_LADDER = [
+  "gemini-3.8-flash",
   "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
 ];
 // Reusable GoogleGenAI client accessor (lazy-initialized)
 function getGenAI(): GoogleGenAI {
