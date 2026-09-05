@@ -71,6 +71,13 @@ try {
 }
 
 export const db: Firestore = firestoreInstance;
+console.log("🔥 Firebase project:", firebaseStaticConfig.projectId);
+console.log("🔥 Firestore database:", firebaseStaticConfig.firestoreDatabaseId);
+
+onAuthStateChanged(auth, (user) => {
+  console.log("🔥 Firebase Auth UID:", user?.uid);
+  console.log("🔥 Firebase Auth Email:", user?.email);
+});
 
 // Zero-Crash Payload Hygiene: Strip all `undefined` values before Firestore writes
 export function sanitizeForFirestore<T extends Record<string, any>>(obj: T): Partial<T> {
