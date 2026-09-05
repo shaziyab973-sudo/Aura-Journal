@@ -21,11 +21,12 @@ A production-ready, privacy-centric full-stack web application that acts as a pr
       ├─► [Google Cloud Secret Manager] ─────► GEMINI_API_KEY & GOOGLE_MAPS_API_KEY (Zero Client-Side Leakage)
       │
       ├─► [Gemini Flash Model Ladder] ───────► Resilient Fallback Engine:
-      │                                       1. gemini-2.5-flash
-      │                                       2. gemini-3.6-flash
-      │                                       3. gemini-2.5-flash-lite
+      │                                       1. gemini-3.1-flash-lite (Ultra-High Availability)
+      │                                       2. gemini-3.8-flash
+      │                                       3. gemini-3.6-flash
       │                                       4. gemini-flash-latest
-      │                                       5. gemini-2.5-pro
+      │                                       5. gemini-3.7-flash
+      │                                       6. Zero-Downtime Deterministic Heuristic Engine
       │
       ├─► [Feature 1: Sentiment Engine] ─────► /api/gemini/sentiment (Score -1.0 to +1.0, Energy, Insights)
       │
@@ -128,50 +129,160 @@ firebase deploy --only firestore:rules
 
 ---
 
-## 4. Local Development
+## 4. How to Run from GitHub
 
-1. Clone or extract the project repository.
-2. Ensure `.env.example` variables are configured or provided via Secret Manager.
-3. Install dependencies:
+### Step 1: Export Project to GitHub
+You can export this project directly to GitHub from Google AI Studio:
+1. In the upper-right corner of the **Google AI Studio** workspace, click the **Settings / Menu** icon (or the **Export** button).
+2. Select **Export to GitHub** (or select **Download ZIP**, extract the folder, and run `git init`, `git add .`, `git commit -m "Initial commit"` and push to your new GitHub repository).
+3. Connect your GitHub account and choose a repository name (e.g., `aura-journal`).
+
+### Step 2: Clone and Configure Locally
+Clone your repository to your development machine:
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_GITHUB_USERNAME/aura-journal.git
+cd aura-journal
+
+# 2. Install dependencies
 npm install
+
+# 3. Configure environment variables
+cp .env.example .env
 ```
 
-4. Run the local unified dev server (Express backend + Vite middleware on Port 3000):
+Open `.env` and fill in your free Gemini API key:
+```env
+GEMINI_API_KEY="your_gemini_api_key_from_google_ai_studio"
+# Optional: only if using Google Maps place search
+GOOGLE_MAPS_API_KEY=""
+```
+
+> **Note on Firebase Config**: The repository already includes `firebase-applet-config.json` containing the client configuration for authentication and Firestore persistence. No manual file changes are needed.
+
+### Step 3: Run the Application
+Launch the local development server:
 
 ```bash
 npm run dev
 ```
 
-Visit `http://localhost:3000` to interact with the application.
+Open **`http://localhost:3000`** in your browser to interact with Aura Journal locally.
+
+### Step 4: Validate Production Build
+To test the self-contained production bundle locally before deploying:
+
+```bash
+# Compile client assets and backend bundle
+npm run build
+
+# Start the compiled production server
+npm start
+```
 
 ---
 
-## 5. Cloud Run Production Deployment
+## 5. Free Deployment to Google Cloud Run (Get Your Live URL)
 
-Deploy the containerized full-stack application directly to Google Cloud Run:
+You can run this application completely within the **Google Cloud Free Tier** without incurring monthly infrastructure costs.
+
+### Free Tier Cost Protection Breakdown
+* **Cloud Run**: Includes **2 million requests/month**, 360,000 GB-seconds of memory, and 180,000 vCPU-seconds **100% FREE** every month.
+* **Cloud Firestore**: Includes **1 GiB of stored data**, 50,000 document reads/day, 20,000 writes/day, and 20,000 deletes/day **FREE**.
+* **Google Cloud Secret Manager**: Includes **6 active secret versions** permanently **FREE**.
+* **Gemini API**: Free tier access with generous rate limits via Google AI Studio.
+* **Firebase Authentication**: Unlimited Google Sign-In federated identity authentication **FREE**.
+
+---
+
+### Option A: Instant 1-Click Live URL via Google AI Studio (No CLI Required)
+If you are working inside Google AI Studio, you already have a live URL:
+1. Look at the top bar of Google AI Studio and click **Share** or **Deploy to Cloud Run**.
+2. AI Studio automatically builds and publishes the containerized service and displays your shareable live URL link:
+   - **Preview URL**: `https://ais-pre-wlz3atldjw7hs5oq4zizz2-261364555080.asia-east1.run.app`
+3. You can copy and share this link directly with anyone.
+
+---
+
+### Option B: Deploy from GitHub / Local Terminal (Zero-Cost Free Tier Settings)
+
+Follow these steps to deploy directly from your local terminal or cloned GitHub repository to get a dedicated custom live URL link:
+
+#### 1. Log in and Set Your Project
+```bash
+# Authenticate with Google Cloud
+gcloud auth login
+
+# Set your active GCP project ID
+gcloud config set project YOUR_PROJECT_ID
+```
+
+#### 2. Enable Free Tier Compatible APIs
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  secretmanager.googleapis.com \
+  firestore.googleapis.com \
+  cloudbuild.googleapis.com
+```
+
+#### 3. Store Secrets in Secret Manager (Free Tier: Up to 6 Secrets)
+```bash
+# Store Gemini API Key
+gcloud secrets create GEMINI_API_KEY --replication-policy="automatic"
+echo -n "YOUR_ACTUAL_GEMINI_API_KEY" | gcloud secrets versions add GEMINI_API_KEY --data-file=-
+
+# Grant Cloud Run compute service account access
+PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format='value(projectNumber)')
+
+gcloud secrets add-iam-policy-binding GEMINI_API_KEY \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+#### 4. Deploy to Cloud Run with Scale-to-Zero Cost Controls
+Use the following command to deploy. The flags `--min-instances=0`, `--max-instances=2`, `--memory=512Mi`, and `--cpu=1` ensure the app automatically scales down to zero instances when idle, incurring **$0 in server costs**:
 
 ```bash
-# Build and deploy to Cloud Run with Secret Manager binding
-gcloud run deploy mindpulse-ai \
+gcloud run deploy aura-journal \
   --source . \
   --region us-central1 \
   --platform managed \
   --allow-unauthenticated \
   --port 3000 \
-  --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest,GOOGLE_MAPS_API_KEY=GOOGLE_MAPS_API_KEY:latest
+  --min-instances 0 \
+  --max-instances 2 \
+  --memory 512Mi \
+  --cpu 1 \
+  --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
-### Mandatory Verification Labeling
+When deployment finishes (usually 1–2 minutes), the output will print your permanent live HTTPS link:
+```
+Service URL: https://aura-journal-xxxxxx-uc.a.run.app
+```
 
-Register the service for automated challenge verification:
+#### 5. Register Challenge Verification Label
+Apply the required campaign tracking label to verify the deployment:
 
 ```bash
-gcloud run services update mindpulse-ai \
+gcloud run services update aura-journal \
   --update-labels=dev-tutorial=cloud-run-ai-challenge \
   --region=us-central1
 ```
+
+---
+
+### Option C: Continuous Deployment from GitHub (Auto-Deploy on Git Push)
+
+To have your live URL update automatically whenever you push code changes to GitHub:
+1. In the Google Cloud Console, open **Cloud Run** → click **Deploy Container** (or click your existing `aura-journal` service).
+2. Select **Continuously deploy from a repository**.
+3. Authorize your GitHub account and select your `aura-journal` repository and branch (e.g. `main`).
+4. Select **Build Type: Google Cloud Buildpacks** (no Dockerfile required).
+5. Under **Security & Variables**, bind `GEMINI_API_KEY` from Secret Manager.
+6. Click **Save**. Every `git push` to your GitHub repo will now automatically build and update your live URL.
 
 ---
 
