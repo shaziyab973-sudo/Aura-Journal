@@ -50,16 +50,61 @@ async function generateContentWithFallback(
   let lastError: any = null;
 
   for (const model of MODEL_FALLBACK_LADDER) {
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: promptOrContents,
-        config: {
-          systemInstruction: systemInstruction || undefined,
-          temperature: 0.7,
-        },
-      });
+    // Retry each model up to 2 times for temporary 503/429 errors
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: promptOrContents,
+          config: {
+            systemInstruction: systemInstruction || undefined,
+            temperature: 0.7,
+          },
+        });
 
+        const text =
+          typeof response.text === "string"
+            ? response.text.trim()
+            : "";
+
+        if (!text) {
+          throw new Error(`Model ${model} returned an empty response.`);
+        }
+
+        console.log(`Gemini response generated successfully using ${model}`);
+
+        return {
+          text,
+          modelUsed: model,
+        };
+      } catch (error: any) {
+        lastError = error;
+
+        const message =
+          error?.message ||
+          error?.error?.message ||
+          JSON.stringify(error);
+
+        console.warn(
+          `Model ${model} attempt ${attempt}/2 failed: ${message}`
+        );
+
+        // Wait briefly before retrying temporary errors
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    console.warn(`Moving to next Gemini model after ${model} failed.`);
+  }
+
+  throw new Error(
+    `All Gemini models failed. Last error: ${
+      lastError?.message || JSON.stringify(lastError)
+    }`
+  );
+}
       const responseText = response.text?.trim() || "";
       if (responseText) {
         return { text: responseText, modelUsed: model };
