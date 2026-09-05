@@ -328,16 +328,22 @@ app.post("/api/gemini/chat", async (req, res) => {
     let modelUsed = "heuristic-fallback";
 
     try {
-      const res = await generateContentWithFallback(contents, systemInstruction);
-      text = res.text;
-      modelUsed = res.modelUsed;
-    } catch (aiErr: any) {
-      console.warn("AI models temporarily unavailable for chat, engaging resilient reflection heuristic:", aiErr?.message);
-      text = generateHeuristicReflection(
-        currentEntry || (messages.length ? messages[messages.length - 1].content : ""),
-        mood
-      );
-    }
+  const result = await generateContentWithFallback(
+    contents,
+    systemInstruction
+  );
+
+  text = result.text;
+  modelUsed = result.modelUsed;
+
+} catch (aiErr: any) {
+  console.error("Gemini chat generation failed:", aiErr?.message);
+
+  return res.status(503).json({
+    error: "Gemini AI is temporarily unavailable.",
+    details: aiErr?.message || "Unknown Gemini error",
+  });
+}
 
     res.json({
       reply: text,
