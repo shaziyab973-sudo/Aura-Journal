@@ -27,13 +27,8 @@ try {
 // gemini-3.1-flash-lite provides unmatched high availability during global capacity spikes
 // gemini-3.8-flash and gemini-3.6-flash provide deep text processing
 const MODEL_FALLBACK_LADDER = [
-  "gemini-3.1-flash-lite",
-  "gemini-3.8-flash",
-  "gemini-3.6-flash",
-  "gemini-flash-latest",
   "gemini-3.7-flash",
 ];
-
 // Reusable GoogleGenAI client accessor (lazy-initialized)
 function getGenAI(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -632,14 +627,13 @@ Rules:
       responseText = res.text;
       modelUsed = res.modelUsed;
     } catch (aiErr: any) {
-      console.warn("AI models temporarily unavailable for task extraction, activating resilient local parser:", aiErr?.message);
-      const fallbackTasks = extractHeuristicTasks(text, sessionTitle);
-      return res.json({
-        tasks: fallbackTasks,
-        modelUsed: "heuristic-fallback",
-        extractedAt: Date.now(),
-      });
-    }
+  console.error("Gemini chat generation failed:", aiErr?.message);
+
+  return res.status(503).json({
+    error: "Gemini AI is unavailable. Please check the Gemini API configuration.",
+    details: aiErr?.message || "Unknown Gemini error",
+  });
+}
 
     let cleanJson = responseText.trim();
     if (cleanJson.startsWith("```json")) {
