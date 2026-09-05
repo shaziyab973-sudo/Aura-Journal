@@ -1,31 +1,33 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Strict User Data Isolation:
-    // Only authenticated users can read, write, or query within their own user space.
+
+    // User profile
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      match /sessions/{sessionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-
-        match /messages/{messageId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
-        }
-      }
-
-      // Feature 2: Action Item Extractor Tasks collection (isolated by user)
-      match /tasks/{taskId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Any additional user nested subcollections
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
     }
 
-    // Explicit denial for everything else
+    // Journal sessions
+    match /users/{userId}/sessions/{sessionId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Messages inside journal sessions
+    match /users/{userId}/sessions/{sessionId}/messages/{messageId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Action tasks
+    match /users/{userId}/tasks/{taskId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Everything else denied
     match /{document=**} {
       allow read, write: if false;
     }
